@@ -1,27 +1,32 @@
 name: bootstrap
 on:
   push:
-    branches: [ master ]
+    branches: [ workflow ]
   pull_request:
-    branches: [ master ]
+    branches: [ workflow ]
 jobs:
   bootstrap-riscv64:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: tools
-      run: sudo apt install -y nasm
+    - name: install missing tools
+      # attr is for setfattr - to use extended attributes
+      run: sudo apt install -y nasm attr
     - name: git haiku
-      run: git -C .. clone https://review.haiku-os.org/haiku
+      run: git -C .. --depth 1 clone https://review.haiku-os.org/haiku
     - name: git buildtools
-      run:  git -C .. clone https://review.haiku-os.org/buildtools
+      run:  git -C .. --depth 1 clone https://review.haiku-os.org/buildtools
     - name: git haikuports
-      run: git -C .. clone https://github.com/haikuports/haikuports
+      run: git -C .. --depth 1 clone https://github.com/haikuports/haikuports
     - name: git haikuporter
-      run: git -C .. clone https://github.com/haikuports/haikuporter
+      run: git -C .. --depth 1 clone https://github.com/haikuports/haikuporter
     - name: jam it
       run: cd ../buildtools/jam && make && ./jam0 install && cd ../..
     - name: setup
       run: mkdir ../bootstrap
     - name: configure
       run: cd ../bootstrap && ../haiku/configure --build-cross-tools riscv64 --cross-tools-source ../buildtools --bootstrap ../haikuporter/haikuporter ../haikuports.cross ../haikuports -j$(nproc)
+    - name: output info
+      run: |
+        ls -l ../bootstrap
+        ../bootstrap/gcc --version
