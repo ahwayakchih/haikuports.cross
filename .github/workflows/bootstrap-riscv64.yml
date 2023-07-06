@@ -35,7 +35,7 @@ jobs:
     - name: setup
       run: mkdir "${{env.WORK_PATH}}/bootstrap"
     # This helps avoiding rebuilds if nothing changed, but it will still rebuild even if something simple
-    # and unrelated was changed anc commited to Haiku repo, e.g., some text or color.
+    # and unrelated was changed and commited to Haiku repo, e.g., some text or color.
     # It would be better to know which files/directories impact bootstrap and check only them.
     - name: prepare cache key
       run: |
@@ -69,3 +69,8 @@ jobs:
       with:
         name: bootstrap
         path: "${{env.WORK_PATH}}/bootstrap"
+    # Build image
+    - name: build
+      env:
+        HAIKU_PORTER_EXTRA_OPTIONS: "--debug"
+      run: cd "${{env.WORK_PATH}}/bootstrap" && jam -q @bootstrap-raw
