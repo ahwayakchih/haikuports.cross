@@ -10,7 +10,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install missing tools
-      # attr is for setfattr - to use extended attributes
+      # attr is for `setfattr` used for extended attributes
+      # nasm is an assembler
       run: sudo apt install -y nasm attr
     - name: git haiku
       run: git -C .. clone --depth 1 https://review.haiku-os.org/haiku
@@ -24,9 +25,34 @@ jobs:
       run: cd ../buildtools/jam && make && ./jam0 install && cd ../..
     - name: setup
       run: mkdir ../bootstrap
+    - name: prepare cache key
+      run: |
+        git -C haiku rev-parse HEAD > bootstrap_cache_key
+        git -C buildtools rev-parse HEAD >> bootstrap_cache_key
+        git -C haikuporter rev-parse HEAD >> bootstrap_cache_key
+        cat bootstrap_cache_key
+    - name: load bootstrap from cache
+      uses: actions/cache/restore@v3
+      id: cache-bootstrap
+      with:
+        path: ../bootstrap
+        key: ${{ runner.os }}-${{ hashFiles('bootstrap_cache_key') }}
     - name: configure
+      id: configure
+      if: steps.cache-bootstrap.outputs.cache-hit != 'true'
       run: cd ../bootstrap && ../haiku/configure --build-cross-tools riscv64 --cross-tools-source ../buildtools --bootstrap ../haikuporter/haikuporter ../haikuports.cross ../haikuports -j$(nproc)
+    - name: save bootstrap to cache
+      uses: actions/cache/save@v3
+      if: steps.configure.outcome == 'success'
+      with:
+        path: ../bootstrap
+        key: ${{ steps.cache-bootstrap.outputs.cache-primary-key }}
+    - name: upload bootstrap artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: bootstrap
+        path: ../bootstrap
     - name: output info
       run: |
         ls -l ../bootstrap
-        ../bootstrap/gcc --version
+        jam --version
