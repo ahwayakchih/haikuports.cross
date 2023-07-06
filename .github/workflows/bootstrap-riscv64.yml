@@ -16,50 +16,50 @@ jobs:
     - name: prepare workspace
       id: workspace
       run: |
-        HAIKU_WORKSPACE=$(dirname ${{GITHUB_WORKSPACE}})
-        mkdir -p "$HAIKU_WORKSPACE/bin"
-        echo "HAIKU_WORKSPACE=$HAIKU_WORKSPACE" >> "$GITHUB_ENV"
-        echo "$HAIKU_WORKSPACE/bin" >> "$GITHUB_PATH"
+        WORK_PATH=$(dirname ${GITHUB_WORKSPACE})
+        mkdir -p "$WORK_PATH/bin"
+        echo "WORK_PATH=$WORK_PATH" >> "$GITHUB_ENV"
+        echo "$WORK_PATH/bin" >> "$GITHUB_PATH"
     - name: git haiku
-      run: git -C "${{env.HAIKU_WORKSPACE}}" clone --depth 1 https://review.haiku-os.org/haiku
+      run: git -C "${{env.WORK_PATH}}" clone --depth 1 https://review.haiku-os.org/haiku
     - name: git buildtools
-      run:  git -C "${{env.HAIKU_WORKSPACE}}" clone --depth 1 https://review.haiku-os.org/buildtools
+      run:  git -C "${{env.WORK_PATH}}" clone --depth 1 https://review.haiku-os.org/buildtools
     - name: git haikuports
-      run: git -C "${{env.HAIKU_WORKSPACE}}" clone --depth 1 https://github.com/haikuports/haikuports
+      run: git -C "${{env.WORK_PATH}}" clone --depth 1 https://github.com/haikuports/haikuports
     - name: git haikuporter
-      run: git -C "${{env.HAIKU_WORKSPACE}}" clone --depth 1 https://github.com/haikuports/haikuporter
+      run: git -C "${{env.WORK_PATH}}" clone --depth 1 https://github.com/haikuports/haikuporter
     - name: jam it
-      run: cd  "${{env.HAIKU_WORKSPACE}}/buildtools/jam" && make && cp -f bin.linuxx86/jam "${{env.HAIKU_WORKSPACE}}/bin/jam"
+      run: cd  "${{env.WORK_PATH}}/buildtools/jam" && make && cp -f bin.linuxx86/jam "${{env.WORK_PATH}}/bin/jam"
     - name: setup
-      run: mkdir "${{env.HAIKU_WORKSPACE}}/bootstrap"
+      run: mkdir "${{env.WORK_PATH}}/bootstrap"
     - name: prepare cache key
       run: |
-        git -C "${{env.HAIKU_WORKSPACE}}/haiku" rev-parse HEAD > bootstrap_cache_key
-        git -C "${{env.HAIKU_WORKSPACE}}/buildtools" rev-parse HEAD >> bootstrap_cache_key
-        git -C "${{env.HAIKU_WORKSPACE}}/haikuporter" rev-parse HEAD >> bootstrap_cache_key
+        git -C "${{env.WORK_PATH}}/haiku" rev-parse HEAD > bootstrap_cache_key
+        git -C "${{env.WORK_PATH}}/buildtools" rev-parse HEAD >> bootstrap_cache_key
+        git -C "${{env.WORK_PATH}}/haikuporter" rev-parse HEAD >> bootstrap_cache_key
         cat bootstrap_cache_key
     - name: load bootstrap from cache
       uses: actions/cache/restore@v3
       id: cache-bootstrap
       with:
-        path: "${{env.HAIKU_WORKSPACE}}/bootstrap"
+        path: "${{env.WORK_PATH}}/bootstrap"
         key: ${{ runner.os }}-${{ hashFiles('bootstrap_cache_key') }}
     - name: configure
       id: configure
       if: steps.cache-bootstrap.outputs.cache-hit != 'true'
-      run: cd "${{env.HAIKU_WORKSPACE}}/bootstrap" && "${{env.HAIKU_WORKSPACE}}/haiku/configure" --build-cross-tools riscv64 --cross-tools-source "${{env.HAIKU_WORKSPACE}}/buildtools" --bootstrap "${{env.HAIKU_WORKSPACE}}/haikuporter/haikuporter" "${{env.HAIKU_WORKSPACE}}/haikuports.cross" "${{env.HAIKU_WORKSPACE}}/haikuports" -j$(nproc)
+      run: cd "${{env.WORK_PATH}}/bootstrap" && "${{env.WORK_PATH}}/haiku/configure" --build-cross-tools riscv64 --cross-tools-source "${{env.WORK_PATH}}/buildtools" --bootstrap "${{env.WORK_PATH}}/haikuporter/haikuporter" "${{env.WORK_PATH}}/haikuports.cross" "${{env.WORK_PATH}}/haikuports" -j$(nproc)
     - name: save bootstrap to cache
       uses: actions/cache/save@v3
       if: steps.configure.outcome == 'success'
       with:
-        path: "${{env.HAIKU_WORKSPACE}}/bootstrap"
+        path: "${{env.WORK_PATH}}/bootstrap"
         key: ${{ steps.cache-bootstrap.outputs.cache-primary-key }}
     - name: upload bootstrap artifact
       uses: actions/upload-artifact@v3
       with:
         name: bootstrap
-        path: "${{env.HAIKU_WORKSPACE}}/bootstrap"
+        path: "${{env.WORK_PATH}}/bootstrap"
     - name: output info
       run: |
-        ls -l "${{env.HAIKU_WORKSPACE}}/bootstrap"
+        ls -l "${{env.WORK_PATH}}/bootstrap"
         jam --version
