@@ -13,13 +13,13 @@ jobs:
       # attr is for setfattr - to use extended attributes
       run: sudo apt install -y nasm attr
     - name: git haiku
-      run: git -C .. --depth 1 clone https://review.haiku-os.org/haiku
+      run: git -C .. clone --depth 1 https://review.haiku-os.org/haiku
     - name: git buildtools
-      run:  git -C .. --depth 1 clone https://review.haiku-os.org/buildtools
+      run:  git -C .. clone --depth 1 https://review.haiku-os.org/buildtools
     - name: git haikuports
-      run: git -C .. --depth 1 clone https://github.com/haikuports/haikuports
+      run: git -C .. clone --depth 1 https://github.com/haikuports/haikuports
     - name: git haikuporter
-      run: git -C .. --depth 1 clone https://github.com/haikuports/haikuporter
+      run: git -C .. clone --depth 1 https://github.com/haikuports/haikuporter
     - name: jam it
       run: cd ../buildtools/jam && make && ./jam0 install && cd ../..
     - name: setup
