@@ -30,8 +30,13 @@ jobs:
       run: git -C "${{env.WORK_PATH}}" clone --depth 1 https://github.com/haikuports/haikuporter
     - name: jam it
       run: cd  "${{env.WORK_PATH}}/buildtools/jam" && make && cp -f bin.linuxx86/jam "${{env.WORK_PATH}}/bin/jam"
+    - name: check the jam
+      run: jam -v
     - name: setup
       run: mkdir "${{env.WORK_PATH}}/bootstrap"
+    # This helps avoiding rebuilds if nothing changed, but it will still rebuild even if something simple
+    # and unrelated was changed anc commited to Haiku repo, e.g., some text or color.
+    # It would be better to know which files/directories impact bootstrap and check only them.
     - name: prepare cache key
       run: |
         git -C "${{env.WORK_PATH}}/haiku" rev-parse HEAD > bootstrap_cache_key
@@ -44,22 +49,23 @@ jobs:
       with:
         path: "${{env.WORK_PATH}}/bootstrap"
         key: ${{ runner.os }}-${{ hashFiles('bootstrap_cache_key') }}
+    # Run build only if cache is not up to date
     - name: configure
       id: configure
       if: steps.cache-bootstrap.outputs.cache-hit != 'true'
       run: cd "${{env.WORK_PATH}}/bootstrap" && "${{env.WORK_PATH}}/haiku/configure" --build-cross-tools riscv64 --cross-tools-source "${{env.WORK_PATH}}/buildtools" --bootstrap "${{env.WORK_PATH}}/haikuporter/haikuporter" "${{env.WORK_PATH}}/haikuports.cross" "${{env.WORK_PATH}}/haikuports" -j$(nproc)
+    # Update cache only if we did actually build anything new successfully
     - name: save bootstrap to cache
       uses: actions/cache/save@v3
       if: steps.configure.outcome == 'success'
       with:
         path: "${{env.WORK_PATH}}/bootstrap"
         key: ${{ steps.cache-bootstrap.outputs.cache-primary-key }}
+    # Upload artifacts only if we did actually run the configure step
+    # This makes sure that we will upload failed builds too, so they can be checked by devs
     - name: upload bootstrap artifact
       uses: actions/upload-artifact@v3
+      if: steps.cache-bootstrap.outputs.cache-hit != 'true'
       with:
         name: bootstrap
         path: "${{env.WORK_PATH}}/bootstrap"
-    - name: output info
-      run: |
-        ls -l "${{env.WORK_PATH}}/bootstrap"
-        jam -v
