@@ -62,4 +62,4 @@ jobs:
     - name: output info
       run: |
         ls -l "${{env.WORK_PATH}}/bootstrap"
-        jam --version
+        jam -v
