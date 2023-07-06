@@ -27,9 +27,9 @@ jobs:
       run: mkdir ../bootstrap
     - name: prepare cache key
       run: |
-        git -C haiku rev-parse HEAD > bootstrap_cache_key
-        git -C buildtools rev-parse HEAD >> bootstrap_cache_key
-        git -C haikuporter rev-parse HEAD >> bootstrap_cache_key
+        git -C ../haiku rev-parse HEAD > bootstrap_cache_key
+        git -C ../buildtools rev-parse HEAD >> bootstrap_cache_key
+        git -C ../haikuporter rev-parse HEAD >> bootstrap_cache_key
         cat bootstrap_cache_key
     - name: load bootstrap from cache
       uses: actions/cache/restore@v3
