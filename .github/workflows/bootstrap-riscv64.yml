@@ -22,11 +22,6 @@ jobs:
         echo "$WORK_PATH/bin" >> "$GITHUB_PATH"
     - name: git haiku
       run: git -C "${{env.WORK_PATH}}" clone --depth 1 https://review.haiku-os.org/haiku
-    # Since we're doing only a shallow clone, and builds may need a hrev tag, we need to get that tag now
-    - name: haiku hrev
-      run: |
-        HREV=$(git -c 'versionsort.suffix=-' ls-remote --tags --sort='v:refname' https://review.haiku-os.org/haiku | grep $(git -C "${{env.WORK_PATH}}/haiku" rev-parse HEAD) | cut --fields=2 | cut --delimiter=/ --fields=3)
-        git -C "${{env.WORK_PATH}}/haiku" tag "$HREV"
     - name: git buildtools
       run:  git -C "${{env.WORK_PATH}}" clone --depth 1 https://review.haiku-os.org/buildtools
     - name: git haikuports
