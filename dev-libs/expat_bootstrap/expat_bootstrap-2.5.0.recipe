@@ -62,15 +62,15 @@ defineDebugInfoPackage expat_bootstrap$secondaryArchSuffix "${debugList[@]}"
 
 BUILD()
 {
-	runConfigure ./configure --disable-static
+	runConfigure ./configure --host=$effectiveTargetMachineTriple --disable-static
 	make $jobArgs
 }
 
 INSTALL()
 {
-	make install
+	make DESTDIR=$installDestDir install
 
-	rm $libDir/libexpat.la
+	rm -rf $installDestDir$binDir
 
 	# remove command and manual for secondary architecture
 	if [ -n "$secondaryArchSuffix" ]; then
@@ -83,8 +83,7 @@ INSTALL()
 
 	# devel package
 	packageEntries devel \
-		$developDir \
-		$libDir/cmake
+		$installDestDir$developDir
 }
 
 TEST()
